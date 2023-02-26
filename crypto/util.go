@@ -3,7 +3,7 @@ package crypto
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,82 +11,90 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	ModeDe = "d"
+	ModeEn = "e"
+)
+
 // DecryptFile 解密文件
-func DecryptFile(file string) ([]byte, error) {
-	data, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("jxcrypt:open file failed:%s", file))
-	}
+func DecryptFile(data []byte) ([]byte, error) {
 	enText, _, err := splitFile(data)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("jxcrypt:open file failed:%s", file))
+		return nil, err
 	}
 	return Decrypt(enText)
 }
 
 func splitFile(data []byte) (context, sum []byte, err error) {
 	split := bytes.Split(data, []byte("#"))
-	if len(split) >= 2 {
-		return split[0][1:], split[1], nil
+	if len(split) < 2 {
+		return nil, nil, errors.Errorf("split context error:%s", string(data))
 	}
-	return nil, nil, errors.New("jxcrypt: split context error")
+	return split[0][1:], split[1], nil
 }
 
 // EncryptFile 加密文件
-func EncryptFile(filename string, data []byte) error {
+func EncryptFile(data []byte) ([]byte, error) {
 	enData, err := Encrypt(data)
 	if err != nil {
-		return errors.Wrap(err, "jxcrypt:encrypt failed")
+		return nil, err
 	}
 	enData = append([]byte("@"), enData...)
-	enData = append(enData, []byte("#1671935116")...)
-	return ioutil.WriteFile(filename, enData, os.ModePerm)
+	enData = append(enData, []byte(fmt.Sprintf("#%d", GetCRC32(enData)))...)
+	return enData, nil
 }
 
-// EncryptDir 加密文件夹
-func EncryptDir(src, dest string, ext ...string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		if !hasExt(path, ext) {
-			log.Printf("...跳过不支持文件:[%s]\n", path)
-			return nil
-		}
-		log.Printf("操作文件...[%s]\n", path)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		return EncryptFile(filepath.Join(dest, relPath), data)
-	})
-}
+func RunDir(src, dst, mode string, ext []string) (err error) {
+	isEnc := false
+	switch mode {
+	case ModeEn:
+		isEnc = false
+	case ModeDe:
+		isEnc = true
+	default:
+		detach := false
+		err = walkDir(src, ext, func(filename string, b []byte) error {
+			if detach {
+				return filepath.SkipAll
+			}
+			isEnc = isEncrypt(b)
+			detach = true
+			return filepath.SkipAll
+		})
+	}
+	if err != nil {
+		return err
+	}
 
-// DecryptDir 解密文件夹
-func DecryptDir(src, dest string, ext ...string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		if !hasExt(path, ext) {
-			log.Printf("...跳过不支持文件:[%s]\n", path)
-			return nil
-		}
-		log.Printf("操作文件...[%s]\n", path)
-		data, err := DecryptFile(path)
-		if err != nil {
-			return err
-		}
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(filepath.Join(dest, relPath), data, os.ModePerm)
-	})
+	_ = os.MkdirAll(dst, os.ModeDir)
+	if !isEnc {
+		log.Printf("正在加密...")
+
+		err = walkDir(src, ext, func(filename string, b []byte) error {
+			if isEncrypt(b) {
+				return writeFile(src, dst, filename, b)
+			}
+			data, err2 := EncryptFile(b)
+			if err2 != nil {
+				return err2
+			}
+			return writeFile(src, dst, filename, data)
+		})
+	} else {
+		log.Printf("正在解密...")
+
+		err = walkDir(src, ext, func(filename string, b []byte) error {
+			if !isEncrypt(b) {
+				return writeFile(src, dst, filename, b)
+			}
+			data, err2 := DecryptFile(b)
+			if err2 != nil {
+				return err2
+			}
+			return writeFile(src, dst, filename, data)
+		})
+	}
+	return err
 }
 
 func hasExt(path string, ext []string) bool {
@@ -97,4 +105,35 @@ func hasExt(path string, ext []string) bool {
 		}
 	}
 	return false
+}
+
+func isEncrypt(data []byte) bool {
+	return bytes.HasPrefix(data, []byte("@"))
+}
+
+func writeFile(src, dst, filename string, data []byte) error {
+	relPath, err := filepath.Rel(src, filename)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dst, relPath), data, os.ModePerm)
+}
+
+func walkDir(dir string, ext []string, fun func(filename string, b []byte) error) error {
+	return filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if !hasExt(path, ext) {
+			log.Printf("...跳过不支持文件:[%s]\n", path)
+			return nil
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		log.Printf("操作文件...[%s]\n", path)
+		return fun(path, data)
+	})
 }

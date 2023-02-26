@@ -2,9 +2,6 @@ package crypto
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -26,36 +23,18 @@ func TestLua(t *testing.T) {
 }
 
 func TestDecryptLuaFile(t *testing.T) {
-	dir := `H:\Games\金X无双后宫V111\gamedata\modcache\SSWS_HG\lua`
-	dest := `H:\Games\金X无双后宫V111\mod\lua`
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		data, err := DecryptFile(path)
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(filepath.Join(dest, info.Name()), data, os.ModePerm)
-	})
+	dir := `F:\Games\JinX119\gamedata\modcache\SSWS_HG\lua_bak`
+	dest := `F:\Games\JinX119\gamedata\modcache\SSWS_HG\lua_bak`
+	err := RunDir(dir, dest, ModeDe, []string{".lua"})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%+v", err)
 	}
 }
 
 func TestEncryptLuaFile(t *testing.T) {
-	dir := `H:\Games\金X无双后宫V111\mod\lua`
-	dest := `H:\Games\金X无双后宫V111\mod_en\lua`
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		return EncryptFile(filepath.Join(dest, info.Name()), data)
-	})
+	dir := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\lua-out`
+	dest := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\lua-out`
+	err := RunDir(dir, dest, ModeEn, []string{".lua"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,16 +43,7 @@ func TestEncryptLuaFile(t *testing.T) {
 func TestDecryptXmlFile(t *testing.T) {
 	dir := `H:\Games\金X无双后宫V111\gamedata\modcache\SSWS_HG\Scripts`
 	dest := `H:\Games\金X无双后宫V111\mod\Scripts`
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		data, err := DecryptFile(path)
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(filepath.Join(dest, info.Name()), data, os.ModePerm)
-	})
+	err := RunDir(dir, dest, ModeDe, []string{".xml"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,16 +51,7 @@ func TestDecryptXmlFile(t *testing.T) {
 func TestEncryptXmlFile(t *testing.T) {
 	dir := `H:\Games\金X无双后宫V111\mod\Scripts`
 	dest := `H:\Games\金X无双后宫V111\mod_en\Scripts`
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		return EncryptFile(filepath.Join(dest, info.Name()), data)
-	})
+	err := RunDir(dir, dest, ModeEn, []string{".xml"})
 	if err != nil {
 		t.Fatal(err)
 	}

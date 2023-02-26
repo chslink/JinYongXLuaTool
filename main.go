@@ -12,9 +12,12 @@ import (
 )
 
 var (
-	mode = flag.String("mode", "d", "模式，e 表示加密模式,d 表示解密模式")
+	mode = flag.String("mode", "", "模式，e 表示加密模式,d 表示解密模式")
 	src  = flag.String("src", "", "源文件夹，默认为当前文件夹")
 	dest = flag.String("dest", "", "目标文件夹，默认为当前文件夹")
+	ver  = flag.String("ver", "", "游戏版本，当前只支持111 119,默认119")
+	key  = flag.String("key", "", "自定义解密key")
+	iv   = flag.String("iv", "", "自定义解密iv")
 	ext  = flag.String("ext", ".lua,.xml", "扩展名，只有对应扩展名才会被加密解密")
 )
 
@@ -24,7 +27,7 @@ func usage() {
 	flag.PrintDefaults()
 	_, _ = fmt.Fprintf(w,
 		`例如： 加密lua文件 %s jxt.exe -mode e -src "H:\Game\JinYongX\gamedata\modcache\SSWS_HG\lua" -dest "H:\Game\JinYongX\gamedata\modcache\SSWS_HG\lua" %s`,
-		"\n", "\n 或者直接将jxt.exe放进文件夹执行\n jxt.exe -mode d")
+		"\n", "\n 或者直接将jxt.exe放进文件夹执行")
 }
 
 var (
@@ -34,6 +37,17 @@ var (
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+
+	if *key != "" && *iv != "" {
+		crypto.SetKeyIV(*key, *iv)
+	} else {
+		if *ver != "" {
+			crypto.SetKeyVer(*ver)
+		} else {
+			crypto.SetKeyVer("119")
+		}
+	}
+
 	_wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -41,22 +55,16 @@ func main() {
 	wd = _wd
 	srcPath := getPath(*src)
 	destPath := getPath(*dest)
-	exts := strings.Split(*ext, ",")
-	switch *mode {
-	case "e":
-		err = crypto.EncryptDir(srcPath, destPath, exts...)
-	case "d":
-		err = crypto.DecryptDir(srcPath, destPath, exts...)
-	}
+	splitExt := strings.Split(*ext, ",")
+	err = crypto.RunDir(srcPath, destPath, *mode, splitExt)
 	if err != nil {
-		log.Printf("程序执行错误\n")
-		log.Print(err)
-		fmt.Println()
+		log.Printf("程序执行错误:\n%+v\n", err)
 		flag.Usage()
-		os.Exit(1)
 	} else {
 		log.Println("操作完成")
 	}
+	fmt.Println("按任意键继续")
+	fmt.Scanf("按任意键继续")
 }
 
 func getPath(path string) string {
