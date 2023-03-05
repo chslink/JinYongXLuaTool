@@ -1,16 +1,21 @@
 package crypto
 
 import (
+	"fmt"
 	"testing"
 )
 
-var newEncText = `X5x9nvhLSHp5Sf5pOxYRDDPV4tfYFk5gbDGkQV7NywhXXL2jylwHq6xylGnTIN4FLjeu3jA+YEEP5XSD4em6LMCwODmOVK7MGz2kyi5PFDlUMHxcbgha8DsTVvB6SQHbEWix8FH0B3CSINIpNLHFPpXzRc09h58hMlaBl2v+JXm7DAxtYv92SEYG23XC7qfx0JnExlJPmCgBkvEnNT4K0Ce+1DPYhgLD1glHXfgYcKkN42OxUnadBjGJ6c7ideNyHJizCNMTXSjtT5dReVzV40qIXtNsbAU7GIDzIeCIrAdpoixigcuBcyiVKKUF+luDRN5beIgiyVGB2mM2NdOsmxq3iMPPrp7y02TVz4ntt9Y9SrTQDZwZOh/V1cEkSHfY1gK1iDbOEi80KRUrCe7SjTrbIFL0lj619jJYOWiBx+haAMjouJGnRjn5M0wzFtmV4jQViLWxX5mILPfeBpYQ6Z/cRecJALXAW1asoN/Hw4ygrt/mhqfuxWify91tVQippEp6gDXY1Dvk2E6q9dXxb8TG5IbxV8q6Xj/llBY2k3M=`
+var newEncText = `JjPwapQGe22Xq+4ZnHr+A25zJZDgZD8U/YmQvRTfUvlDmhW9uIw+NgKupRVY5jQF8KA+CksAALccPd17e9t26fDGXgZdSn4SYijIcgnTcVcAPpxVdUt/T6Y2U9nycsmJHLH99GDKuvt9fuoJHqd9IhaiImd+xc3HB1V4EpAY6RQTMsw34VcFOf1jXG3VVOceGss1ZygXsX+uvcoml/bpzsI3zpmvk5YnNjSG36E1Y7KB5gY/zANA26XhsaHQF5ClrV2yrAyv+nR5wR7secDaKT/Xd6rXL7FOa7woplhnavVWrijjuROzn5ZG4oGOQt1eB3akSLHqbKiT6Fg24U3QTUtQh754i0V22JfnFqwsXEZs0DwlcK2dIWDEfL6+FVUlXZNUSzVdPQNl1g02pwbCgRwSzIiAO0swgxj3a0la2hQ0tGrn15P/oMf1yERw8apFX3k7eVnc8f8awDhFCULI+tFoprFObINPORKA324+azrsgLXsbjd2YJQZ9pttYq1/4thyKXR58hzYv5PGovepzuMs6q8CEIBJA7zzJJdB33Q=`
 
 func TestLua(t *testing.T) {
 	deData, err := Decrypt([]byte(newEncText))
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(deData[:100])
+	fmt.Println([]byte(`<root>
+	 <story name="测试一下的剧情">
+	<action type="DIALOG"`))
 	enByte, err := Encrypt(deData)
 	if err != nil {
 		t.Fatal(err)
@@ -22,8 +27,8 @@ func TestLua(t *testing.T) {
 }
 
 func TestDecryptLuaFile(t *testing.T) {
-	dir := `F:\Games\JinX119\gamedata\modcache\SSWS_HG\lua_bak`
-	dest := `F:\Games\JinX119\gamedata\modcache\SSWS_HG\lua_bak`
+	dir := `F:\Games\[PC]SSWS_HG_v21\gamedata\modcache\SSWS_HG\lua`
+	dest := `F:\Games\[PC]SSWS_HG_v21\gamedata\modcache\SSWS_HG\lua_bak`
 	err := RunDir(dir, dest, ModeDe, []string{".lua"})
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -40,8 +45,8 @@ func TestEncryptLuaFile(t *testing.T) {
 }
 
 func TestDecryptXmlFile(t *testing.T) {
-	dir := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts`
-	dest := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts-bak`
+	dir := `F:\Games\[PC]SSWS_HG_v21\gamedata\modcache\SSWS_HG\Scripts`
+	dest := `F:\Games\[PC]SSWS_HG_v21\gamedata\modcache\SSWS_HG\Scripts_bak`
 	err := RunDir(dir, dest, ModeDe, []string{".xml"})
 	if err != nil {
 		t.Fatal(err)

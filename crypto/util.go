@@ -94,9 +94,10 @@ func RunDir(src, dst, mode string, ext []string) (err error) {
 				return err2
 			}
 			// 119版本xml乱码修复
-			if strings.Contains(filename, ".xml") {
+			if strings.Contains(filename, ".xml") && curVer == "119" {
 				pos := 0
 				for (pos > 0 && pos < 200) || !isXml(data) {
+
 					fixBit := pos % 3
 					switch fixBit {
 					case 0:
@@ -112,7 +113,25 @@ func RunDir(src, dst, mode string, ext []string) (err error) {
 					log.Printf("修复乱码... \n")
 				}
 			}
-
+			// 122 版本修复
+			if curVer == "122" {
+				if strings.Contains(filename, ".xml") {
+					pos := 0
+					for (pos > 0 && pos < 60) || !isXml(data) {
+						fixBit := pos % 2
+						switch fixBit {
+						case 0:
+							data[pos] = data[pos] + 1
+						case 1:
+							data[pos] = data[pos] + 3
+						}
+						pos += 1
+					}
+					if pos > 0 {
+						log.Printf("修复乱码... \n")
+					}
+				}
+			}
 			return writeFile(src, dst, filename, data)
 		})
 	}
