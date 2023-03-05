@@ -1,18 +1,16 @@
 package crypto
 
 import (
-	"fmt"
 	"testing"
 )
 
-var newEncText = `VFOTUtI39pwaDS62Vscga3suoofLFJhJ+aBVCuRKHZAYh1zfQ9tysnFZOFaOHOV5NQCUq7Wq4RcY18sbjB7pD33jOUJ5j97r2T3PhPqOaelT4LlTj0O1DHOYSC3JqlMmIWs1z74BfhL3UAXLs1oiuEOXLeZ8QHakEN1ZSOtQqLKnGM2wjGsDb2dDYAMOyr9SnFNLvSa20KCz2tpcuvUvp9A4oNby1IzI4v0OnxBBqo7BbBiyZDqQRcfC2U0xyv3PuDLAMs6wYb8b/j8WJWeUD0H1ydOvCbnGn0rI8yIJ8ArCeEUoHcbwxyUQM4GrN7/Flix6o3aYxOrIRcjEswVkrwl1nE4qqgL5UmT+yIuhkcfxHsw6yIIApbCoc7dKsTPRTehoUZ44fBpCP7F46H+kYfqJ5JaP3/bE/CwSbzzZymMEDFaBWgcwvrc/OGCnF8ZUiyUi5EA++az212Yab7c8JwCUnU8uuPfTPMbTyiXaQnWgA3wmuyhUYQ6So8dyg9ewGc0XMsSn2e1XKAGUVDUQItZkblEY6WopLaAiZiq6zGDUyBkbWWix6r5hdVlYSiDmQsDVwrbE8qsLLe7/IKejsTNLSXi46W0EV3HggTRJLsY6nGr5ev2p0GwTXBX2UFEBObFEXdQDLQJSOEAvwY9pMkOK0Y9aro3TWNJ8+gvU5yNtUzCG0K6CAp4M5Xq6BVgZ`
+var newEncText = `X5x9nvhLSHp5Sf5pOxYRDDPV4tfYFk5gbDGkQV7NywhXXL2jylwHq6xylGnTIN4FLjeu3jA+YEEP5XSD4em6LMCwODmOVK7MGz2kyi5PFDlUMHxcbgha8DsTVvB6SQHbEWix8FH0B3CSINIpNLHFPpXzRc09h58hMlaBl2v+JXm7DAxtYv92SEYG23XC7qfx0JnExlJPmCgBkvEnNT4K0Ce+1DPYhgLD1glHXfgYcKkN42OxUnadBjGJ6c7ideNyHJizCNMTXSjtT5dReVzV40qIXtNsbAU7GIDzIeCIrAdpoixigcuBcyiVKKUF+luDRN5beIgiyVGB2mM2NdOsmxq3iMPPrp7y02TVz4ntt9Y9SrTQDZwZOh/V1cEkSHfY1gK1iDbOEi80KRUrCe7SjTrbIFL0lj619jJYOWiBx+haAMjouJGnRjn5M0wzFtmV4jQViLWxX5mILPfeBpYQ6Z/cRecJALXAW1asoN/Hw4ygrt/mhqfuxWify91tVQippEp6gDXY1Dvk2E6q9dXxb8TG5IbxV8q6Xj/llBY2k3M=`
 
 func TestLua(t *testing.T) {
 	deData, err := Decrypt([]byte(newEncText))
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(string(deData))
 	enByte, err := Encrypt(deData)
 	if err != nil {
 		t.Fatal(err)
@@ -20,6 +18,7 @@ func TestLua(t *testing.T) {
 	if string(enByte) != newEncText {
 		t.Fatal("加密失败")
 	}
+
 }
 
 func TestDecryptLuaFile(t *testing.T) {
@@ -41,16 +40,16 @@ func TestEncryptLuaFile(t *testing.T) {
 }
 
 func TestDecryptXmlFile(t *testing.T) {
-	dir := `H:\Games\金X无双后宫V111\gamedata\modcache\SSWS_HG\Scripts`
-	dest := `H:\Games\金X无双后宫V111\mod\Scripts`
+	dir := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts`
+	dest := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts-bak`
 	err := RunDir(dir, dest, ModeDe, []string{".xml"})
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 func TestEncryptXmlFile(t *testing.T) {
-	dir := `H:\Games\金X无双后宫V111\mod\Scripts`
-	dest := `H:\Games\金X无双后宫V111\mod_en\Scripts`
+	dir := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts-bak`
+	dest := `F:\Games\JinX119all\gamedata\modcache\SSWS_HG\Scripts-bak`
 	err := RunDir(dir, dest, ModeEn, []string{".xml"})
 	if err != nil {
 		t.Fatal(err)

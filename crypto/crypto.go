@@ -8,10 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// var key = []byte(`64555156d26643a06b691e44`)
-// var iv = []byte(`6451551f56dc266a`)
-var key = []byte(`4dd83c28e46e3998249465f3`)
-var iv = []byte(`4dd583c628e746e8`)
+var key []byte
+var iv []byte
 
 var keyM = map[string]KeyPair{
 	"111": {
@@ -48,8 +46,9 @@ func Decrypt(data []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "decode base64 failed")
 	}
 	dbf = dbf[:n]
-	block, err := aes.NewCipher(key)
-	if err != nil {
+
+	block, err2 := aes.NewCipher(key)
+	if err2 != nil {
 		return nil, errors.Wrap(err, "decrypt failed")
 	}
 	bm := cipher.NewCBCDecrypter(block, iv)
@@ -77,4 +76,7 @@ func Encrypt(data []byte) ([]byte, error) {
 	buf := make([]byte, base64.StdEncoding.EncodedLen(len(pbuf)))
 	base64.StdEncoding.Encode(buf, pbuf)
 	return buf, nil
+}
+func init() {
+	SetKeyVer("119")
 }
