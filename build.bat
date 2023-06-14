@@ -1,0 +1,1 @@
+go build -ldflags="-s -w" -o jxt.exe && upx -9 jxt.exe

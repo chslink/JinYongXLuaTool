@@ -94,7 +94,3 @@ func isXml(data []byte) bool {
 
 	return false
 }
-
-func init() {
-
-}
