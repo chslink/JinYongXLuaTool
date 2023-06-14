@@ -2,13 +2,11 @@ package crypto
 
 import (
 	"bytes"
-	"encoding/xml"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -93,45 +91,9 @@ func RunDir(src, dst, mode string, ext []string) (err error) {
 			if err2 != nil {
 				return err2
 			}
-			// 119版本xml乱码修复
-			if strings.Contains(filename, ".xml") && curVer == "119" {
-				pos := 0
-				for (pos > 0 && pos < 200) || !isXml(data) {
+			// 修复数据函数
+			Fix(filename, data)
 
-					fixBit := pos % 3
-					switch fixBit {
-					case 0:
-						data[pos] = data[pos] + 1
-					case 1:
-						data[pos] = data[pos] - 1
-					case 2:
-						data[pos] = data[pos] + 2
-					}
-					pos += 1
-				}
-				if pos > 0 {
-					log.Printf("修复乱码... \n")
-				}
-			}
-			// 122 版本修复
-			if curVer == "122" {
-				if strings.Contains(filename, ".xml") {
-					pos := 0
-					for (pos > 0 && pos < 60) || !isXml(data) {
-						fixBit := pos % 2
-						switch fixBit {
-						case 0:
-							data[pos] = data[pos] + 1
-						case 1:
-							data[pos] = data[pos] + 3
-						}
-						pos += 1
-					}
-					if pos > 0 {
-						log.Printf("修复乱码... \n")
-					}
-				}
-			}
 			return writeFile(src, dst, filename, data)
 		})
 	}
@@ -177,16 +139,4 @@ func walkDir(dir string, ext []string, fun func(filename string, b []byte) error
 		log.Printf("操作文件...[%s]\n", path)
 		return fun(path, data)
 	})
-}
-
-func isXml(data []byte) bool {
-	err := xml.Unmarshal(data, new(interface{}))
-	if err == nil {
-		return true
-	}
-	//if strings.Contains(err.Error(), "attribute name without = in element") {
-	//	return true
-	//}
-
-	return false
 }
