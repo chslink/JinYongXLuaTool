@@ -4,47 +4,13 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"log"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
-var key []byte
-var iv []byte
-var curVer string
-
-var keyM = map[string]KeyPair{
-	"111": {
-		Key: "64555156d26643a06b691e44",
-		IV:  "6451551f56dc266a",
-	},
-	"119": {
-		Key: "4dd83c28e46e3998249465f3",
-		IV:  "4dd583c628e746e8",
-	},
-	"122": {
-		Key: "88672fb343269ae765e96977",
-		IV:  "886e72f5b341326e",
-	},
-}
-
-type KeyPair struct {
-	Key string
-	IV  string
-}
-
-func SetKeyVer(ver string) {
-	if v, ok := keyM[ver]; ok {
-		key = []byte(v.Key)
-		iv = []byte(v.IV)
-		curVer = ver
-	}
-}
-func SetKeyIV(_key, _iv string) {
-	key = []byte(_key)
-	iv = []byte(_iv)
-}
-
-func Decrypt(data []byte) ([]byte, error) {
+func Decrypt(conf *VersionConfig, filename string, data []byte) ([]byte, error) {
 	enc := base64.StdEncoding
 	dbf := make([]byte, enc.DecodedLen(len(data)))
 	n, err := enc.Decode(dbf, data)
@@ -52,22 +18,64 @@ func Decrypt(data []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "decode base64 failed")
 	}
 	dbf = dbf[:n]
+	fileType := filepath.Ext(filename)
+	curKey := []byte(conf.Key)
+	curIV := []byte(conf.IV)
+	switch fileType {
+	case ".lua":
+		if conf.LuaKey != "" {
+			curKey = []byte(conf.LuaKey)
+			curIV = []byte(conf.LuaIV)
+		}
+	case ".xml":
+		if conf.XmlKey != "" {
+			curKey = []byte(conf.XmlKey)
+			curIV = []byte(conf.XmlIV)
+		}
+	}
 
-	block, err2 := aes.NewCipher(key)
+	block, err2 := aes.NewCipher(curKey)
 	if err2 != nil {
 		return nil, errors.Wrap(err, "decrypt failed")
 	}
-	bm := cipher.NewCBCDecrypter(block, iv)
+	bm := cipher.NewCBCDecrypter(block, curIV)
 	bm.CryptBlocks(dbf, dbf)
 	deData, err := NewPkcs7Padding(block.BlockSize()).Unpad(dbf)
 	if err != nil {
-		return nil, errors.Wrap(err, "decrypt failed")
+		log.Printf("warning: unpad file failed: %v,%s", err, filename)
+		deData = dbf
+	}
+	switch fileType {
+	case ".lua":
+		if conf.FixLua {
+			return conf.FixLuaFunc(filename, deData)
+		}
+	case ".xml":
+		if conf.FixXml {
+			return conf.FixXmlFunc(filename, deData)
+		}
+
 	}
 	return deData, nil
 }
 
-func Encrypt(data []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+func Encrypt(conf *VersionConfig, filename string, data []byte) ([]byte, error) {
+	fileType := filepath.Ext(filename)
+	curKey := []byte(conf.Key)
+	curIV := []byte(conf.IV)
+	switch fileType {
+	case ".lua":
+		if conf.LuaKey != "" {
+			curKey = []byte(conf.LuaKey)
+			curIV = []byte(conf.LuaIV)
+		}
+	case ".xml":
+		if conf.XmlKey != "" {
+			curKey = []byte(conf.XmlKey)
+			curIV = []byte(conf.XmlIV)
+		}
+	}
+	block, err := aes.NewCipher(curKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "encrypt failed")
 	}
@@ -76,13 +84,10 @@ func Encrypt(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "encrypt failed")
 	}
-	bm := cipher.NewCBCEncrypter(block, iv)
+	bm := cipher.NewCBCEncrypter(block, curIV)
 	bm.CryptBlocks(pbuf, pbuf)
 
 	buf := make([]byte, base64.StdEncoding.EncodedLen(len(pbuf)))
 	base64.StdEncoding.Encode(buf, pbuf)
 	return buf, nil
-}
-func init() {
-	SetKeyVer("122")
 }

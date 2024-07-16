@@ -37,14 +37,16 @@ var (
 func main() {
 	flag.Usage = usage
 	flag.Parse()
-
+	curVer := crypto.DefaultConfig
 	if *key != "" && *iv != "" {
-		crypto.SetKeyIV(*key, *iv)
+		curVer.Key = *key
+		curVer.IV = *iv
 	} else {
 		if *ver != "" {
-			crypto.SetKeyVer(*ver)
-		} else {
-			crypto.SetKeyVer("119")
+			v, ok := crypto.ConfigMap[*ver]
+			if ok {
+				curVer = v
+			}
 		}
 	}
 
@@ -56,7 +58,7 @@ func main() {
 	srcPath := getPath(*src)
 	destPath := getPath(*dest)
 	splitExt := strings.Split(*ext, ",")
-	err = crypto.RunDir(srcPath, destPath, *mode, splitExt)
+	err = crypto.RunDir(srcPath, destPath, *mode, splitExt, curVer)
 	if err != nil {
 		log.Printf("程序执行错误:\n%+v\n", err)
 		flag.Usage()

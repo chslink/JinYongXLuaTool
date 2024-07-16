@@ -12,8 +12,8 @@ func TestCrc32(t *testing.T) {
 }
 
 func TestGetCRC32(t *testing.T) {
-	text := `@` + newEncText
-	if GetCRC32([]byte(text)) != 2673404822 {
+	text := `@` + var122EncText
+	if GetCRC32([]byte(text)) != 4101382441 {
 		t.Fatal("crc error")
 	}
 }

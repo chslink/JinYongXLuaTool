@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io/fs"
 	"log"
@@ -17,12 +18,12 @@ const (
 )
 
 // DecryptFile 解密文件
-func DecryptFile(data []byte) ([]byte, error) {
+func DecryptFile(conf *VersionConfig, filename string, data []byte) ([]byte, error) {
 	enText, _, err := splitFile(data)
 	if err != nil {
 		return nil, err
 	}
-	return Decrypt(enText)
+	return Decrypt(conf, filename, enText)
 }
 
 func splitFile(data []byte) (context, sum []byte, err error) {
@@ -34,8 +35,8 @@ func splitFile(data []byte) (context, sum []byte, err error) {
 }
 
 // EncryptFile 加密文件
-func EncryptFile(data []byte) ([]byte, error) {
-	enData, err := Encrypt(data)
+func EncryptFile(conf *VersionConfig, filename string, data []byte) ([]byte, error) {
+	enData, err := Encrypt(conf, filename, data)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func EncryptFile(data []byte) ([]byte, error) {
 	return enData, nil
 }
 
-func RunDir(src, dst, mode string, ext []string) (err error) {
+func RunDir(src, dst, mode string, ext []string, conf *VersionConfig) (err error) {
 	isEnc := false
 	switch mode {
 	case ModeEn:
@@ -74,7 +75,7 @@ func RunDir(src, dst, mode string, ext []string) (err error) {
 			if isEncrypt(b) {
 				return writeFile(src, dst, filename, b)
 			}
-			data, err2 := EncryptFile(b)
+			data, err2 := EncryptFile(conf, filename, b)
 			if err2 != nil {
 				return err2
 			}
@@ -87,13 +88,10 @@ func RunDir(src, dst, mode string, ext []string) (err error) {
 			if !isEncrypt(b) {
 				return writeFile(src, dst, filename, b)
 			}
-			data, err2 := DecryptFile(b)
+			data, err2 := DecryptFile(conf, filename, b)
 			if err2 != nil {
 				return err2
 			}
-			// 修复数据函数
-			Fix(filename, data)
-
 			return writeFile(src, dst, filename, data)
 		})
 	}
@@ -139,4 +137,12 @@ func walkDir(dir string, ext []string, fun func(filename string, b []byte) error
 		log.Printf("操作文件...[%s]\n", path)
 		return fun(path, data)
 	})
+}
+
+func isXml(data []byte) bool {
+	err := xml.Unmarshal(data, new(interface{}))
+	if err == nil {
+		return true
+	}
+	return false
 }
